@@ -87,28 +87,6 @@ export default function Navbar() {
 
         {/* Action Button & Select Portal */}
         <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {!isAuthenticated && (
-            <select 
-              value={settings.institutionId}
-              onChange={(e) => selectInstitution(e.target.value)}
-              style={{
-                padding: '0.4rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--glass-border)',
-                color: 'var(--text-primary)',
-                fontFamily: 'inherit',
-                fontSize: '0.85rem',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="default_institution">Smart Library (Default)</option>
-              {institutions.filter(i => i.id !== 'default_institution').map(inst => (
-                <option key={inst.id} value={inst.id}>{inst.name}</option>
-              ))}
-            </select>
-          )}
-
           {isAuthenticated ? (
             <Link 
               to={user?.role === 'admin' || user?.role === 'librarian' || user?.role === 'super_admin' ? '/admin' : '/student'} 
@@ -125,7 +103,7 @@ export default function Navbar() {
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem' }}
             >
               <LogIn size={18} />
-              <span>Login</span>
+              <span>Get Started</span>
             </Link>
           )}
         </div>
@@ -184,28 +162,6 @@ export default function Navbar() {
             );
           })}
           <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {!isAuthenticated && (
-              <select 
-                value={settings.institutionId}
-                onChange={(e) => selectInstitution(e.target.value)}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'inherit',
-                  fontSize: '0.9rem',
-                  width: '100%'
-                }}
-              >
-                <option value="default_institution">Smart Library (Default)</option>
-                {institutions.filter(i => i.id !== 'default_institution').map(inst => (
-                  <option key={inst.id} value={inst.id}>{inst.name}</option>
-                ))}
-              </select>
-            )}
-
             {isAuthenticated ? (
               <Link 
                 to={user?.role === 'admin' || user?.role === 'librarian' || user?.role === 'super_admin' ? '/admin' : '/student'} 
@@ -224,7 +180,7 @@ export default function Navbar() {
                 style={{ width: '100%' }}
               >
                 <LogIn size={18} />
-                <span>Login</span>
+                <span>Get Started</span>
               </Link>
             )}
           </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building, AlertCircle, BookOpen, CheckCircle2, UserPlus } from 'lucide-react';
+import { Building, AlertCircle, BookOpen, CheckCircle2, UserPlus, Home } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -70,7 +70,11 @@ const Register = () => {
 
   if (successMessage) {
     return (
-      <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem' }}>
+      <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem', position: 'relative' }}>
+        <Link to="/" style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          <Home size={20} />
+          <span style={{ fontSize: '0.9rem' }}>Back to Home</span>
+        </Link>
         <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', textAlign: 'center' }}>
           <div className="flex-center" style={{ 
             width: '64px', height: '64px', 
@@ -97,7 +101,11 @@ const Register = () => {
   }
 
   return (
-    <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem' }}>
+    <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem', position: 'relative' }}>
+      <Link to="/" style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Home size={20} />
+        <span style={{ fontSize: '0.9rem' }}>Back to Home</span>
+      </Link>
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="flex-center" style={{ 

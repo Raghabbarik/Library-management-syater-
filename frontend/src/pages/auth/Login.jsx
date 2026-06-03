@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../contexts/SettingsContext';
-import { BookOpen, LogIn, AlertCircle, Sparkles } from 'lucide-react';
+import { BookOpen, LogIn, AlertCircle, Sparkles, Home } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -130,7 +130,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem' }}>
+    <div className="flex-center" style={{ minHeight: '100vh', padding: '1.5rem', position: 'relative' }}>
+      <Link to="/" style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Home size={20} />
+        <span style={{ fontSize: '0.9rem' }}>Back to Home</span>
+      </Link>
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="flex-center" style={{ 
