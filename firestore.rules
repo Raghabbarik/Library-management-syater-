@@ -1,0 +1,177 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPER FUNCTIONS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Is the user authenticated via Firebase Auth?
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Is the requesting user the owner of the specified uid?
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Get role from Firebase custom claims (set by Admin SDK on register/login)
+    function getRole() {
+      return request.auth.token.role;
+    }
+
+    // Get institutionId from Firebase custom claims
+    function getClaimInstId() {
+      return request.auth.token.institutionId;
+    }
+
+    // Is the user a Super Admin?
+    function isSuperAdmin() {
+      return isAuthenticated() && getRole() == 'super_admin';
+    }
+
+    // Is the user an institution Admin or Librarian?
+    function isAdmin() {
+      return isAuthenticated() && (getRole() == 'admin' || getRole() == 'librarian');
+    }
+
+    // Does the user belong to this specific institution?
+    function belongsToInstitution(instId) {
+      return isAuthenticated() && getClaimInstId() == instId;
+    }
+
+    // Is the user an admin/librarian of this specific institution?
+    function isAdminOf(instId) {
+      return isAdmin() && belongsToInstitution(instId);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ROOT: userIndex collection
+    // Used as a fast lookup to find a user's institution without needing to
+    // query collectionGroup. Only readable by the owner or Super Admin.
+    // Written only by the backend (Admin SDK bypasses rules).
+    // ─────────────────────────────────────────────────────────────────────────
+    match /userIndex/{uid} {
+      allow read: if isOwner(uid) || isSuperAdmin();
+      allow write: if false; // Backend Admin SDK only
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ROOT: institutions collection
+    // ─────────────────────────────────────────────────────────────────────────
+    match /institutions/{instId} {
+      // Anyone can read the institution list (for login portal selector)
+      allow read: if true;
+
+      // Only Super Admin can create or delete institutions
+      allow create, delete: if isSuperAdmin();
+
+      // Super Admin can update any institution.
+      // Institution Admin can update only their own institution (no plan changes).
+      allow update: if isSuperAdmin() ||
+        (isAdminOf(instId) &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']));
+
+      // ─── USERS subcollection ─────────────────────────────────────────────
+      match /users/{uid} {
+        // A user can read their own profile.
+        // An admin can read all users in their institution.
+        // Super Admin can read anyone.
+        allow read: if isOwner(uid) ||
+                       isAdminOf(instId) ||
+                       isSuperAdmin();
+
+        // Backend Admin SDK handles all writes. Clients cannot directly
+        // create/update/delete user profiles to prevent privilege escalation.
+        allow create: if false; // Backend only
+        allow update: if false; // Backend only
+        allow delete: if false; // Backend only
+      }
+
+      // ─── BOOKS subcollection ─────────────────────────────────────────────
+      match /books/{bookId} {
+        // Any authenticated user belonging to this institution can read books.
+        // Super Admin can read books in any institution.
+        allow read: if belongsToInstitution(instId) || isSuperAdmin();
+
+        // Only institution admins or Super Admin can manage books.
+        allow create, update, delete: if isAdminOf(instId) || isSuperAdmin();
+      }
+
+      // ─── TRANSACTIONS subcollection ──────────────────────────────────────
+      match /transactions/{transactionId} {
+        // A student/teacher can read their own transactions.
+        // Admins can read all transactions in their institution.
+        // Super Admin can read any.
+        allow read: if (belongsToInstitution(instId) &&
+                        resource.data.user == request.auth.uid) ||
+                       isAdminOf(instId) ||
+                       isSuperAdmin();
+
+        // Only admins/librarians manage transactions (issue, return, renew).
+        allow create, update, delete: if isAdminOf(instId) || isSuperAdmin();
+      }
+
+      // ─── GATE LOGS subcollection ─────────────────────────────────────────
+      match /gate_logs/{logId} {
+        // A user can read their own gate logs.
+        // Admins can read all gate logs in their institution.
+        allow read: if (belongsToInstitution(instId) &&
+                        resource.data.user == request.auth.uid) ||
+                       isAdminOf(instId) ||
+                       isSuperAdmin();
+
+        // Authenticated institution members can create a gate log (self-scan).
+        // Admins can also create gate logs (desk scan).
+        allow create: if belongsToInstitution(instId) &&
+                         request.resource.data.user == request.auth.uid ||
+                         isAdminOf(instId);
+
+        // Only admins can update or delete gate logs.
+        allow update, delete: if isAdminOf(instId) || isSuperAdmin();
+      }
+
+      // ─── NOTIFICATIONS subcollection ─────────────────────────────────────
+      match /notifications/{notifId} {
+        // A user can read only their own notifications.
+        allow read: if isAuthenticated() &&
+                       resource.data.recipient == request.auth.uid &&
+                       belongsToInstitution(instId);
+
+        // Only backend creates notifications.
+        allow create: if false;
+
+        // A user can mark their own notification as read (update isRead field).
+        allow update: if isAuthenticated() &&
+                         resource.data.recipient == request.auth.uid &&
+                         belongsToInstitution(instId) &&
+                         request.resource.data.diff(resource.data)
+                           .affectedKeys().hasOnly(['isRead', 'updatedAt']);
+
+        // A user can delete their own notification. Admins can delete any.
+        allow delete: if (isAuthenticated() &&
+                          resource.data.recipient == request.auth.uid &&
+                          belongsToInstitution(instId)) ||
+                         isAdminOf(instId) ||
+                         isSuperAdmin();
+      }
+
+      // ─── SETTINGS subcollection ──────────────────────────────────────────
+      match /settings/{docId} {
+        // Anyone in the institution can read settings.
+        allow read: if belongsToInstitution(instId) || isSuperAdmin();
+
+        // Only admins or Super Admin can write settings.
+        allow write: if isAdminOf(instId) || isSuperAdmin();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DENY ALL OTHER PATHS
+    // ─────────────────────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
