@@ -4,7 +4,7 @@ import {
   Search, Users, ToggleLeft, ToggleRight, X,
   BookOpen, CheckCircle, Calendar, Phone, Mail, Hash,
   Building2, GraduationCap, IndianRupee, BookMarked, History, ArrowLeft, Clock,
-  Download
+  Download, Trash2, AlertTriangle
 } from 'lucide-react';
 import { downloadLibraryCard } from '../../utils/cardDownloader';
 import { useSettings } from '../../contexts/SettingsContext';
@@ -287,6 +287,7 @@ export default function AdminUsers({ registryType = 'all' }) {
   const [selectedRole, setSelectedRole] = useState(registryType === 'students' ? 'student' : (registryType === 'staff' ? 'staff' : ''));
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -296,6 +297,7 @@ export default function AdminUsers({ registryType = 'all' }) {
     setSearchQuery('');
     setSelectedDepartment('');
     setSelectedYear('');
+    setSelectedStatus('');
     setSelectedRole(registryType === 'students' ? 'student' : (registryType === 'staff' ? 'staff' : ''));
   }, [registryType]);
 
@@ -306,6 +308,9 @@ export default function AdminUsers({ registryType = 'all' }) {
   const [roleFormData, setRoleFormData] = useState({ role: '', name: '', studentId: '', department: '', year: '', phone: '' });
   const [editError, setEditError] = useState('');
 
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState(0);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -314,13 +319,14 @@ export default function AdminUsers({ registryType = 'all' }) {
       if (selectedRole) url += `&role=${encodeURIComponent(selectedRole)}`;
       if (selectedDepartment) url += `&department=${encodeURIComponent(selectedDepartment)}`;
       if (selectedYear) url += `&year=${encodeURIComponent(selectedYear)}`;
+      if (selectedStatus) url += `&isActive=${selectedStatus === 'active'}`;
       const res = await axios.get(url);
       if (res.data.success) { setUsers(res.data.data); setTotalPages(res.data.pagination.pages); }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchUsers(); }, [page, selectedRole, selectedDepartment, selectedYear]);
+  useEffect(() => { fetchUsers(); }, [page, selectedRole, selectedDepartment, selectedYear, selectedStatus]);
 
   const handleSearchSubmit = (e) => { e.preventDefault(); setPage(1); fetchUsers(); };
 
@@ -355,6 +361,21 @@ export default function AdminUsers({ registryType = 'all' }) {
       const res = await axios.put(`/api/users/${editingUser._id}`, roleFormData);
       if (res.data.success) { setEditingUser(null); fetchUsers(); }
     } catch (err) { setEditError(err.response?.data?.message || 'Edit failed.'); }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      const res = await axios.delete(`/api/users/${deleteConfirmUser._id}`);
+      if (res.data.success) {
+        setUsers(prev => prev.filter(u => u._id !== deleteConfirmUser._id));
+        setDeleteConfirmUser(null);
+        setDeleteConfirmStep(0);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Delete failed.');
+      setDeleteConfirmUser(null);
+      setDeleteConfirmStep(0);
+    }
   };
 
   /* ── If a student is selected, show full-page detail ── */
@@ -414,6 +435,12 @@ export default function AdminUsers({ registryType = 'all' }) {
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         )}
+
+        <select value={selectedStatus} onChange={e => { setPage(1); setSelectedStatus(e.target.value); }} style={{ width: '135px' }}>
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -470,6 +497,9 @@ export default function AdminUsers({ registryType = 'all' }) {
                         <button onClick={e => handleOpenEdit(u, e)} className="btn btn-secondary" style={{ padding: '0.32rem 0.65rem', fontSize: '0.75rem' }}>Edit</button>
                         <button onClick={e => handleToggleStatus(u._id, e)} className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'}`} style={{ padding: '0.32rem 0.5rem', fontSize: '0.75rem' }} title={u.isActive ? 'Deactivate' : 'Activate'}>
                           {u.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); setDeleteConfirmUser(u); setDeleteConfirmStep(1); }} className="btn btn-danger" style={{ padding: '0.32rem 0.5rem', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} title="Delete User">
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -533,6 +563,38 @@ export default function AdminUsers({ registryType = 'all' }) {
         .registry-row:hover td { background: rgba(161,188,152,0.08); }
         .registry-row td { border-bottom: 1px solid rgba(161,188,152,0.12); transition: background 0.12s; }
       `}</style>
+      
+      {/* Delete Double Confirmation Modal */}
+      {deleteConfirmUser && deleteConfirmStep > 0 && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 12000, padding: '1.5rem' }} onClick={() => { setDeleteConfirmUser(null); setDeleteConfirmStep(0); }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem', position: 'relative', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <AlertTriangle size={48} style={{ color: 'var(--danger)', margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', fontFamily: 'Lora, serif', color: 'var(--danger)' }}>
+              {deleteConfirmStep === 1 ? 'Delete User?' : 'Are you absolutely sure?'}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              {deleteConfirmStep === 1
+                ? `You are about to delete ${deleteConfirmUser.name} (${deleteConfirmUser.role}). This action cannot be undone.`
+                : `This is your final warning. Deleting ${deleteConfirmUser.name} will permanently erase their profile and they will lose access.`
+              }
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button type="button" className="btn btn-secondary" style={{ padding: '0.6rem 1.25rem' }} onClick={() => { setDeleteConfirmUser(null); setDeleteConfirmStep(0); }}>
+                Cancel
+              </button>
+              {deleteConfirmStep === 1 ? (
+                <button type="button" className="btn btn-danger" style={{ padding: '0.6rem 1.25rem', background: 'var(--danger)', color: '#fff' }} onClick={() => setDeleteConfirmStep(2)}>
+                  Yes, Delete
+                </button>
+              ) : (
+                <button type="button" className="btn btn-danger" style={{ padding: '0.6rem 1.25rem', background: '#dc2626', color: '#fff', fontWeight: 700 }} onClick={handleDeleteUser}>
+                  Permanently Delete
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -70,9 +70,12 @@ const Login = () => {
               setIsLoading(false);
               return;
             }
+            navigate('/student');
+          } else if (role === 'admin' || role === 'librarian' || role === 'super_admin') {
+            navigate('/admin');
+          } else {
+            navigate('/');
           }
-          
-          navigate('/');
         } else {
           setError('Failed to retrieve user profile details.');
         }
@@ -115,9 +118,12 @@ const Login = () => {
               setIsLoading(false);
               return;
             }
+            navigate('/student');
+          } else if (role === 'admin' || role === 'librarian' || role === 'super_admin') {
+            navigate('/admin');
+          } else {
+            navigate('/');
           }
-          
-          navigate('/');
         }
       } catch (err) {
         setError('Error verifying account credentials.');

@@ -93,6 +93,12 @@ export default function InstitutionPortal() {
       setError('Access denied. Your account does not belong to this institution portal.');
       return;
     }
+    // Check if account is active
+    if (!loggedUser.isActive) {
+      await logout();
+      setError('Your account is pending admin approval. You will be able to sign in once an administrator activates your account.');
+      return;
+    }
     navigate('/student/overview');
   };
 
@@ -148,7 +154,7 @@ export default function InstitutionPortal() {
 
       const result = await register(registerData);
       if (result.success) {
-        setSuccessMessage('Registration successful! You can now sign in.');
+        setSuccessMessage(result.message || 'Registration successful! Your account is pending admin approval.');
         setIsLoginMode(true);
         setPassword('');
         setConfirmPassword('');
@@ -181,25 +187,6 @@ export default function InstitutionPortal() {
     }
     setIsLoading(false);
   };
-
-  // ─── Loading State ───────────────────────────────────────────────
-  if (instLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-base)'
-      }}>
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <Loader2 size={40} color="var(--accent-cyan)" className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Loading institution portal...</p>
-        </div>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
 
   // ─── Error State ─────────────────────────────────────────────────
   if (instError) {
@@ -334,16 +321,20 @@ export default function InstitutionPortal() {
         ) : (
           <BookOpen size={22} color="var(--accent-cyan)" />
         )}
-        <span style={{
-          fontFamily: 'Outfit, sans-serif',
-          fontWeight: 600,
-          fontSize: '1rem',
-          background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
-          {institution?.name}
-        </span>
+        {instLoading ? (
+          <div style={{ height: '24px', width: '150px', background: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }} className="animate-pulse" />
+        ) : (
+          <span style={{
+            fontFamily: 'Outfit, sans-serif',
+            fontWeight: 600,
+            fontSize: '1rem',
+            background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            {institution?.name}
+          </span>
+        )}
         <span style={{
           marginLeft: 'auto',
           fontSize: '0.72rem',
@@ -386,7 +377,9 @@ export default function InstitutionPortal() {
               overflow: 'hidden',
               boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
             }}>
-              {institution?.logo ? (
+              {instLoading ? (
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} className="animate-pulse" />
+              ) : institution?.logo ? (
                 <img src={institution.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
                 <BookOpen size={36} color="var(--accent-cyan)" />
@@ -394,18 +387,22 @@ export default function InstitutionPortal() {
             </div>
 
             <div>
-              <h1 style={{
-                fontFamily: 'Outfit, sans-serif',
-                fontSize: '2rem',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                background: 'linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '0.5rem'
-              }}>
-                {institution?.name}
-              </h1>
+              {instLoading ? (
+                <div style={{ height: '32px', width: '250px', background: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)', marginBottom: '0.5rem' }} className="animate-pulse" />
+              ) : (
+                <h1 style={{
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: '2rem',
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  background: 'linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  marginBottom: '0.5rem'
+                }}>
+                  {institution?.name}
+                </h1>
+              )}
               <p style={{
                 fontSize: '1rem',
                 color: 'var(--text-secondary)',
@@ -447,7 +444,7 @@ export default function InstitutionPortal() {
             color: 'var(--accent-cyan)'
           }}>
             <Users size={14} />
-            Exclusive access for {institution?.name} students only
+            Exclusive access for {instLoading ? 'your institution' : institution?.name} students only
           </div>
         </div>
 
@@ -480,13 +477,15 @@ export default function InstitutionPortal() {
             borderRadius: 'var(--radius-md)',
             marginBottom: '1.5rem'
           }}>
-            {institution?.logo ? (
+            {instLoading ? (
+              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} className="animate-pulse" />
+            ) : institution?.logo ? (
               <img src={institution.logo} alt="" style={{ height: '20px', objectFit: 'contain' }} />
             ) : (
               <BookOpen size={16} color="var(--accent-cyan)" />
             )}
             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--accent-cyan)' }}>
-              {institution?.name} Portal
+              {instLoading ? 'Institution' : institution?.name} Portal
             </span>
           </div>
 
@@ -797,7 +796,7 @@ export default function InstitutionPortal() {
             color: 'var(--text-muted)',
             lineHeight: '1.5'
           }}>
-            This portal is exclusively for students of <strong style={{ color: 'var(--text-secondary)' }}>{institution?.name}</strong>.
+            This portal is exclusively for students of <strong style={{ color: 'var(--text-secondary)' }}>{instLoading ? 'this institution' : institution?.name}</strong>.
             Access is restricted to registered members only.
           </p>
         </div>

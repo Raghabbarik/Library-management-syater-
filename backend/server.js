@@ -21,6 +21,7 @@ const notificationRoutes = require('./src/routes/notificationRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const settingsRoutes = require('./src/routes/settingsRoutes');
 const institutionRoutes = require('./src/routes/institutionRoutes');
+const supportRoutes = require('./src/routes/supportRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +58,8 @@ const limiter = rateLimit({
   max: process.env.NODE_ENV === 'production' ? 200 : 10000, // lenient limit in development
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/', limiter);
 
 // Body Parsing
@@ -83,6 +86,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/institutions', institutionRoutes);
+app.use('/api/support', supportRoutes);
 
 // Error Handling
 app.use(notFound);

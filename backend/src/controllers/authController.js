@@ -61,7 +61,7 @@ exports.register = async (req, res) => {
       institutionId: assignedInstitutionId,
       avatar: avatarUrl,
       qrCode,
-      isActive: true, // All users active instantly
+      isActive: targetRole === 'admin', // Students/Teachers pending admin approval
       isVerified: targetRole === 'admin' ? true : false,
       membershipExpiry: null,
       totalBooksIssued: 0,
@@ -98,7 +98,7 @@ exports.register = async (req, res) => {
       success: true,
       message: targetRole === 'admin' 
         ? 'Institution registered successfully. Pending Super Admin approval.' 
-        : 'Profile registration successful',
+        : 'Registration successful! Your account is pending admin approval.',
       user: { id: uid, ...userProfile },
     });
   } catch (error) {

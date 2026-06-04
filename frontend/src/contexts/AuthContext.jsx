@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }) => {
       handleLogout();
 
       if (res.data.success) {
-        return { success: true, message: 'Registration successful! You can now sign in.' };
+        return { success: true, message: res.data.message };
       } else {
         // Rollback Firebase auth if profile creation fails
         await firebaseUser.delete();

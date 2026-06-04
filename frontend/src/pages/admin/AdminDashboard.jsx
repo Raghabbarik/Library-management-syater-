@@ -5,7 +5,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  LayoutDashboard, BookOpen, Users, ArrowLeftRight, HelpCircle, LogOut, Bell, Menu, X, QrCode, ClipboardList, ChevronLeft, ChevronRight, Home, Settings, Building, DollarSign, Award, Shield 
+  LayoutDashboard, BookOpen, Users, ArrowLeftRight, HelpCircle, LogOut, Bell, Menu, X, QrCode, ClipboardList, ChevronLeft, ChevronRight, Home, Settings, Building, DollarSign, Award, Shield, LayoutTemplate 
 } from 'lucide-react';
 
 import AdminOverview from './AdminOverview';
@@ -19,6 +19,8 @@ import SuperAdminInstitutions from './SuperAdminInstitutions';
 import SuperAdminOverview from './SuperAdminOverview';
 import SuperAdminRevenue from './SuperAdminRevenue';
 import SuperAdminPlans from './SuperAdminPlans';
+import AdminSupport from './AdminSupport';
+import SuperAdminSupport from './SuperAdminSupport';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -29,6 +31,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(user?.role === 'super_admin' ? 'super-dashboard' : 'overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isNavbarMode, setIsNavbarMode] = useState(false);
   const [liveLog, setLiveLog] = useState(null); // Real-time scanner notifications
   
   // Inside Count
@@ -112,6 +115,7 @@ export default function AdminDashboard() {
         { id: 'institutions', name: 'Institutions', icon: Building },
         { id: 'revenue', name: 'Revenue', icon: DollarSign },
         { id: 'plans', name: 'Plans', icon: Award },
+        { id: 'support', name: 'Support Tickets', icon: HelpCircle },
       ]
     },
     {
@@ -137,6 +141,7 @@ export default function AdminDashboard() {
       title: 'System Settings',
       items: [
         { id: 'settings', name: 'Settings', icon: Settings },
+        { id: 'support', name: 'Support', icon: HelpCircle },
         { id: 'home', name: 'Back to Home', icon: Home }
       ]
     }
@@ -170,6 +175,8 @@ export default function AdminDashboard() {
         return <AdminLogs />;
       case 'settings':
         return <AdminSettings />;
+      case 'support':
+        return user?.role === 'super_admin' ? <SuperAdminSupport /> : <AdminSupport />;
       default:
         return user?.role === 'super_admin' ? <SuperAdminOverview /> : <AdminOverview setActiveTab={setActiveTab} />;
     }
@@ -178,22 +185,24 @@ export default function AdminDashboard() {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: isNavbarMode ? 'column' : 'row',
       minHeight: '100vh',
       background: 'var(--bg-base)',
       color: 'var(--text-primary)',
       fontFamily: 'Inter, sans-serif'
     }}>
-      {/* Sidebar for Desktop */}
-      <aside className={`glass-panel sidebar-container ${isSidebarOpen ? 'sidebar-active' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`} style={{
+      {/* Sidebar / Navbar */}
+      <aside className={`glass-panel sidebar-container ${isSidebarOpen ? 'sidebar-active' : ''} ${isSidebarCollapsed && !isNavbarMode ? 'collapsed' : ''} ${isNavbarMode ? 'navbar-mode-container' : ''}`} style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '2rem',
-        borderRadius: '0 var(--radius-xl) var(--radius-xl) 0',
+        borderRadius: isNavbarMode ? '0 0 var(--radius-lg) var(--radius-lg)' : '0 var(--radius-xl) var(--radius-xl) 0',
         borderLeft: 'none',
-        position: 'fixed',
+        position: isNavbarMode ? 'sticky' : 'fixed',
         top: 0,
-        bottom: 0,
+        bottom: isNavbarMode ? 'auto' : 0,
         left: 0,
+        width: isNavbarMode ? '100%' : undefined,
         zIndex: 999,
       }}>
         {/* Logo and Collapse Toggle */}
@@ -212,13 +221,15 @@ export default function AdminDashboard() {
           )}
           
           {/* Collapse Toggle for Desktop */}
-          <button className="desktop-only" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} style={{
-            background: 'var(--bg-surface-hover)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', cursor: 'pointer',
-            borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginLeft: isSidebarCollapsed ? '0' : 'auto'
-          }}>
-            {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          </button>
+          {!isNavbarMode && (
+            <button className="desktop-only" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} style={{
+              background: 'var(--bg-surface-hover)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', cursor: 'pointer',
+              borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginLeft: isSidebarCollapsed ? '0' : 'auto'
+            }}>
+              {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          )}
 
           {/* Close for Mobile */}
           <button className="mobile-only" onClick={() => setIsSidebarOpen(false)} style={{
@@ -229,7 +240,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Card */}
-        <div style={{
+        <div className={isNavbarMode ? 'user-card-hidden' : ''} style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem',
@@ -261,7 +272,7 @@ export default function AdminDashboard() {
           {menuSections.map((section, idx) => (
             <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {!isSidebarCollapsed && (
-                <div style={{
+                <div className="nav-section-title" style={{
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
@@ -281,6 +292,7 @@ export default function AdminDashboard() {
                 return (
                   <button
                     key={item.id}
+                    className="nav-item-btn"
                     onClick={() => handleTabChange(item.id)}
                     style={{
                       display: 'flex',
@@ -310,10 +322,11 @@ export default function AdminDashboard() {
         {/* Logout Button */}
         <button
           onClick={logout}
+          className="nav-logout-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: isSidebarCollapsed ? '0' : '0.75rem',
+            gap: isSidebarCollapsed && !isNavbarMode ? '0' : '0.75rem',
             padding: '0.75rem',
             borderRadius: 'var(--radius-md)',
             background: 'var(--danger-bg)',
@@ -321,18 +334,18 @@ export default function AdminDashboard() {
             color: 'var(--danger)',
             cursor: 'pointer',
             fontWeight: 500,
-            justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-            marginTop: 'auto'
+            justifyContent: isSidebarCollapsed && !isNavbarMode ? 'center' : 'flex-start',
+            marginTop: isNavbarMode ? '0' : 'auto'
           }}
-          title={isSidebarCollapsed ? 'Sign Out' : undefined}
+          title={(isSidebarCollapsed || isNavbarMode) ? 'Sign Out' : undefined}
         >
           <LogOut size={18} style={{ flexShrink: 0 }} />
-          {!isSidebarCollapsed && <span>Sign Out</span>}
+          {!(isSidebarCollapsed && !isNavbarMode) && !isNavbarMode && <span>Sign Out</span>}
         </button>
       </aside>
 
       {/* Main Content Area */}
-      <div className={`main-content-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <div className={`main-content-layout ${isSidebarCollapsed && !isNavbarMode ? 'collapsed' : ''} ${isNavbarMode ? 'navbar-mode-active' : ''}`}>
 
         
         {/* Header Bar */}
@@ -367,6 +380,19 @@ export default function AdminDashboard() {
                 <span>Students Inside: {currentlyInside}</span>
               </div>
             )}
+
+            {/* Layout Toggle Button */}
+            <button 
+              onClick={() => setIsNavbarMode(!isNavbarMode)} 
+              className="desktop-only" 
+              style={{ 
+                background: 'var(--bg-surface-hover)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', 
+                cursor: 'pointer', padding: '0.4rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}
+              title={isNavbarMode ? "Switch to Sidebar" : "Switch to Top Navbar"}
+            >
+              {isNavbarMode ? <LayoutDashboard size={18} /> : <LayoutTemplate size={18} />}
+            </button>
 
             <div className="desktop-only" style={{ textAlign: 'right' }}>
               <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500 }}>{user?.name}</span>
@@ -426,18 +452,66 @@ export default function AdminDashboard() {
           width: 80px;
           padding: 2rem 0.5rem;
         }
+        
+        /* Navbar Mode Styles */
+        .navbar-mode-container {
+          position: sticky !important;
+          top: 0;
+          left: 0;
+          width: 100% !important;
+          height: 70px !important;
+          flex-direction: row !important;
+          align-items: center;
+          padding: 0 1.5rem !important;
+          z-index: 1000;
+          border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+          overflow: visible !important;
+          gap: 1.5rem !important;
+        }
+        .navbar-mode-container nav {
+          flex-direction: row !important;
+          align-items: center;
+          gap: 0.5rem !important;
+          overflow-x: auto !important;
+          flex: 1;
+        }
+        .navbar-mode-container nav > div {
+          flex-direction: row !important;
+          align-items: center;
+          gap: 0.5rem !important;
+        }
+        .navbar-mode-container .nav-item-btn {
+          padding: 0.5rem 0.75rem !important;
+          white-space: nowrap;
+        }
+        .navbar-mode-container .user-card-hidden {
+          display: none !important;
+        }
+        .navbar-mode-container .nav-section-title {
+          display: none !important;
+        }
+        .navbar-mode-container .nav-logout-btn {
+          padding: 0.5rem !important;
+        }
+        .main-content-layout.navbar-mode-active {
+          padding-left: 0 !important;
+        }
+
         @media (max-width: 767px) {
           .sidebar-container {
             width: 260px !important;
             padding: 2rem 1.5rem !important;
             transform: translateX(-100%) !important;
+            height: 100vh !important;
+            flex-direction: column !important;
+            position: fixed !important;
           }
           .sidebar-container.sidebar-active {
             transform: translateX(0) !important;
           }
         }
         @media (min-width: 768px) {
-          .sidebar-container {
+          .sidebar-container:not(.navbar-mode-container) {
             transform: translateX(0) !important;
           }
         }
