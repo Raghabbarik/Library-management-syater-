@@ -22,6 +22,7 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('overview');
+  const [visitedTabs, setVisitedTabs] = useState(new Set(['overview']));
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -80,6 +81,7 @@ export default function StudentDashboard() {
       return;
     }
     setActiveTab(tabId);
+    setVisitedTabs(prev => new Set(prev).add(tabId));
     setIsSidebarOpen(false);
   };
 
@@ -93,24 +95,7 @@ export default function StudentDashboard() {
     { id: 'profile', name: 'Profile Settings', icon: User },
   ];
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return <StudentOverview setActiveTab={setActiveTab} />;
-      case 'gate-scan':
-        return <StudentGateScan />;
-      case 'catalog':
-        return <StudentCatalog />;
-      case 'history':
-        return <StudentHistory />;
-      case 'logs':
-        return <StudentLogs />;
-      case 'profile':
-        return <StudentProfile />;
-      default:
-        return <StudentOverview setActiveTab={setActiveTab} />;
-    }
-  };
+  // renderContent removed and replaced inline for keep-alive strategy
 
   return (
     <div style={{
@@ -120,6 +105,21 @@ export default function StudentDashboard() {
       color: 'var(--text-primary)',
       fontFamily: 'Inter, sans-serif'
     }}>
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="mobile-only sidebar-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 998
+          }}
+        />
+      )}
+
       {/* Sidebar for Desktop */}
       <aside className={`glass-panel sidebar-container ${isSidebarOpen ? 'sidebar-active' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`} style={{
         display: 'flex',
@@ -356,7 +356,12 @@ export default function StudentDashboard() {
 
         {/* Page Content */}
         <main className="dashboard-main">
-          {renderContent()}
+          {visitedTabs.has('overview') && <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}><StudentOverview setActiveTab={(t) => { setActiveTab(t); setVisitedTabs(prev => new Set(prev).add(t)); }} /></div>}
+          {visitedTabs.has('gate-scan') && <div style={{ display: activeTab === 'gate-scan' ? 'block' : 'none' }}><StudentGateScan /></div>}
+          {visitedTabs.has('catalog') && <div style={{ display: activeTab === 'catalog' ? 'block' : 'none' }}><StudentCatalog /></div>}
+          {visitedTabs.has('history') && <div style={{ display: activeTab === 'history' ? 'block' : 'none' }}><StudentHistory /></div>}
+          {visitedTabs.has('logs') && <div style={{ display: activeTab === 'logs' ? 'block' : 'none' }}><StudentLogs /></div>}
+          {visitedTabs.has('profile') && <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}><StudentProfile /></div>}
         </main>
       </div>
 

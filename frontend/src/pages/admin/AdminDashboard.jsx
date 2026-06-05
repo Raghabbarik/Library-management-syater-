@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState(user?.role === 'super_admin' ? 'super-dashboard' : 'overview');
+  const [visitedTabs, setVisitedTabs] = useState(new Set([user?.role === 'super_admin' ? 'super-dashboard' : 'overview']));
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNavbarMode, setIsNavbarMode] = useState(false);
@@ -106,6 +107,7 @@ export default function AdminDashboard() {
       return;
     }
     setActiveTab(tabId);
+    setVisitedTabs(prev => new Set(prev).add(tabId));
     setIsSidebarOpen(false);
   };
 
@@ -152,40 +154,7 @@ export default function AdminDashboard() {
 
   const allMenuItems = menuSections.flatMap(s => s.items);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'super-dashboard':
-        return <SuperAdminOverview />;
-      case 'institutions':
-        return <SuperAdminInstitutions />;
-      case 'revenue':
-        return <SuperAdminRevenue />;
-      case 'plans':
-        return <SuperAdminPlans />;
-      case 'payments':
-        return <SuperAdminPayments />;
-      case 'overview':
-        return <AdminOverview setActiveTab={setActiveTab} />;
-      case 'books':
-        return <AdminBooks />;
-      case 'students':
-        return <AdminUsers registryType="students" />;
-      case 'staff':
-        return <AdminUsers registryType="staff" />;
-      case 'transactions':
-        return <AdminTransactions />;
-      case 'scanner':
-        return <AdminScanner fetchInsideCount={fetchInsideCount} />;
-      case 'gate-logs':
-        return <AdminLogs />;
-      case 'settings':
-        return <AdminSettings />;
-      case 'support':
-        return user?.role === 'super_admin' ? <SuperAdminSupport /> : <AdminSupport />;
-      default:
-        return user?.role === 'super_admin' ? <SuperAdminOverview /> : <AdminOverview setActiveTab={setActiveTab} />;
-    }
-  };
+  // renderContent is removed and replaced inline for keep-alive strategy
 
   // Check if admin institution is active
   if (user?.role === 'admin' && user?.institution?.subscriptionStatus !== 'active') {
@@ -214,6 +183,21 @@ export default function AdminDashboard() {
       color: 'var(--text-primary)',
       fontFamily: 'Inter, sans-serif'
     }}>
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && !isNavbarMode && (
+        <div 
+          className="mobile-only sidebar-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 998
+          }}
+        />
+      )}
+
       {/* Sidebar / Navbar */}
       <aside className={`glass-panel sidebar-container ${isSidebarOpen ? 'sidebar-active' : ''} ${isSidebarCollapsed && !isNavbarMode ? 'collapsed' : ''} ${isNavbarMode ? 'navbar-mode-container' : ''}`} style={{
         display: 'flex',
@@ -461,7 +445,28 @@ export default function AdminDashboard() {
 
         {/* Page Content */}
         <main className="dashboard-main">
-          {renderContent()}
+          {user?.role === 'super_admin' ? (
+            <>
+              {visitedTabs.has('super-dashboard') && <div style={{ display: activeTab === 'super-dashboard' ? 'block' : 'none' }}><SuperAdminOverview /></div>}
+              {visitedTabs.has('institutions') && <div style={{ display: activeTab === 'institutions' ? 'block' : 'none' }}><SuperAdminInstitutions /></div>}
+              {visitedTabs.has('revenue') && <div style={{ display: activeTab === 'revenue' ? 'block' : 'none' }}><SuperAdminRevenue /></div>}
+              {visitedTabs.has('plans') && <div style={{ display: activeTab === 'plans' ? 'block' : 'none' }}><SuperAdminPlans /></div>}
+              {visitedTabs.has('payments') && <div style={{ display: activeTab === 'payments' ? 'block' : 'none' }}><SuperAdminPayments /></div>}
+              {visitedTabs.has('support') && <div style={{ display: activeTab === 'support' ? 'block' : 'none' }}><SuperAdminSupport /></div>}
+            </>
+          ) : (
+            <>
+              {visitedTabs.has('overview') && <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}><AdminOverview setActiveTab={(t) => { setActiveTab(t); setVisitedTabs(prev => new Set(prev).add(t)); }} /></div>}
+              {visitedTabs.has('books') && <div style={{ display: activeTab === 'books' ? 'block' : 'none' }}><AdminBooks /></div>}
+              {visitedTabs.has('students') && <div style={{ display: activeTab === 'students' ? 'block' : 'none' }}><AdminUsers registryType="students" /></div>}
+              {visitedTabs.has('staff') && <div style={{ display: activeTab === 'staff' ? 'block' : 'none' }}><AdminUsers registryType="staff" /></div>}
+              {visitedTabs.has('transactions') && <div style={{ display: activeTab === 'transactions' ? 'block' : 'none' }}><AdminTransactions /></div>}
+              {visitedTabs.has('scanner') && <div style={{ display: activeTab === 'scanner' ? 'block' : 'none' }}><AdminScanner fetchInsideCount={fetchInsideCount} /></div>}
+              {visitedTabs.has('gate-logs') && <div style={{ display: activeTab === 'gate-logs' ? 'block' : 'none' }}><AdminLogs /></div>}
+              {visitedTabs.has('settings') && <div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}><AdminSettings /></div>}
+              {visitedTabs.has('support') && <div style={{ display: activeTab === 'support' ? 'block' : 'none' }}><AdminSupport /></div>}
+            </>
+          )}
         </main>
       </div>
 
