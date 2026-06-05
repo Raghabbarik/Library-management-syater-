@@ -39,12 +39,11 @@ const Login = () => {
     }
   }, [instQueryParam]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const executeLogin = async (loginEmail, loginPassword) => {
     setError('');
     setIsLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(loginEmail, loginPassword);
     
     if (result.success) {
       try {
@@ -87,6 +86,11 @@ const Login = () => {
     }
     
     setIsLoading(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await executeLogin(email, password);
   };
 
   const handleGoogleSignIn = async () => {
@@ -292,7 +296,11 @@ const Login = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button 
               type="button" 
-              onClick={() => { setEmail('admin@smartlib.com'); setPassword('adminpassword123'); }}
+              onClick={() => { 
+                setEmail('admin@smartlib.com'); 
+                setPassword('adminpassword123'); 
+                executeLogin('admin@smartlib.com', 'adminpassword123');
+              }}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
