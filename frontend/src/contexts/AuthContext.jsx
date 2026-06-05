@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 const AuthContext = createContext(null);
@@ -190,6 +191,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true, message: 'Password reset email sent successfully. Please check your inbox.' };
+    } catch (error) {
+      let message = 'Failed to send password reset email.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'No account found with this email.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Invalid email address format.';
+      } else {
+        message = error.message;
+      }
+      return { success: false, error: message };
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -205,7 +223,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, login, loginWithGoogle, register, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, setUser, token, login, loginWithGoogle, register, logout, resetPassword, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

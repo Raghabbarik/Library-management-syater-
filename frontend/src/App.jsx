@@ -12,6 +12,7 @@ const HowToUse = lazy(() => import('./pages/public/HowToUse'));
 // Lazy load Auth Pages
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const RemoteScanner = lazy(() => import('./pages/admin/RemoteScanner'));
 const SuperAdminLogin = lazy(() => import('./pages/auth/SuperAdminLogin'));
 const InstitutionPortal = lazy(() => import('./pages/auth/InstitutionPortal'));
@@ -44,6 +45,7 @@ function App() {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/remote-scanner" element={<RemoteScanner />} />
           <Route path="/superadmin" element={<SuperAdminLogin />} />
           
