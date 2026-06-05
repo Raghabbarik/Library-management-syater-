@@ -5,7 +5,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  LayoutDashboard, BookOpen, Users, ArrowLeftRight, HelpCircle, LogOut, Bell, Menu, X, QrCode, ClipboardList, ChevronLeft, ChevronRight, Home, Settings, Building, DollarSign, Award, Shield, LayoutTemplate 
+  LayoutDashboard, BookOpen, Users, ArrowLeftRight, HelpCircle, LogOut, Bell, Menu, X, QrCode, ClipboardList, ChevronLeft, ChevronRight, Home, Settings, Building, DollarSign, Award, Shield, LayoutTemplate, AlertCircle
 } from 'lucide-react';
 
 import AdminOverview from './AdminOverview';
@@ -21,6 +21,8 @@ import SuperAdminRevenue from './SuperAdminRevenue';
 import SuperAdminPlans from './SuperAdminPlans';
 import AdminSupport from './AdminSupport';
 import SuperAdminSupport from './SuperAdminSupport';
+import SuperAdminPayments from './SuperAdminPayments';
+import PaymentGateway from '../../components/payment/PaymentGateway';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -109,12 +111,13 @@ export default function AdminDashboard() {
 
   const menuSections = user?.role === 'super_admin' ? [
     {
-      title: 'Super Admin',
+      title: 'Global Management',
       items: [
-        { id: 'super-dashboard', name: 'Dashboard', icon: LayoutDashboard },
+        { id: 'super-dashboard', name: 'Global Overview', icon: LayoutDashboard },
         { id: 'institutions', name: 'Institutions', icon: Building },
         { id: 'revenue', name: 'Revenue', icon: DollarSign },
         { id: 'plans', name: 'Plans', icon: Award },
+        { id: 'payments', name: 'Payment Issues', icon: AlertCircle },
         { id: 'support', name: 'Support Tickets', icon: HelpCircle },
       ]
     },
@@ -159,6 +162,8 @@ export default function AdminDashboard() {
         return <SuperAdminRevenue />;
       case 'plans':
         return <SuperAdminPlans />;
+      case 'payments':
+        return <SuperAdminPayments />;
       case 'overview':
         return <AdminOverview setActiveTab={setActiveTab} />;
       case 'books':
@@ -181,6 +186,24 @@ export default function AdminDashboard() {
         return user?.role === 'super_admin' ? <SuperAdminOverview /> : <AdminOverview setActiveTab={setActiveTab} />;
     }
   };
+
+  // Check if admin institution is active
+  if (user?.role === 'admin' && user?.institution?.subscriptionStatus !== 'active') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+        <header style={{ padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '1.25rem' }}>
+            <Building className="text-gradient" size={28} />
+            <span className="text-gradient">{user.institution?.name || 'Your Institution'}</span>
+          </div>
+          <button onClick={logout} className="btn btn-secondary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <LogOut size={16} /> Logout
+          </button>
+        </header>
+        <PaymentGateway user={user} onPaymentSuccess={() => window.location.reload()} />
+      </div>
+    );
+  }
 
   return (
     <div style={{

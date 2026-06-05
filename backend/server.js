@@ -22,6 +22,7 @@ const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const settingsRoutes = require('./src/routes/settingsRoutes');
 const institutionRoutes = require('./src/routes/institutionRoutes');
 const supportRoutes = require('./src/routes/supportRoutes');
+const paymentRoutes = require('./src/routes/paymentRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -87,6 +88,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/institutions', institutionRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error Handling
 app.use(notFound);

@@ -35,6 +35,7 @@ exports.register = async (req, res) => {
         name: institutionName,
         logo: '',
         plan: 'free',
+        subscriptionStatus: 'pending',
         adminUid: uid,
         adminEmail: email.toLowerCase().trim(),
         createdAt: new Date().toISOString(),

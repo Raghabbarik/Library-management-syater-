@@ -81,6 +81,14 @@ const protect = async (req, res, next) => {
         message: 'Firebase Admin credentials are missing on the server. Please place your "firebase-service-account.json" file inside the "backend/" folder.'
       });
     }
+    
+    if (error.message && error.message.includes('16 UNAUTHENTICATED')) {
+      return res.status(500).json({
+        success: false,
+        message: 'Backend server authentication failed. The firebase-service-account.json private key might be revoked, expired, or invalid. Please generate a new one from Firebase Console.'
+      });
+    }
+
     return res.status(401).json({ success: false, message: 'Not authorized, token invalid or expired' });
   }
 };

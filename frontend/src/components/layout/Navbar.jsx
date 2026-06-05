@@ -24,6 +24,26 @@ export default function Navbar() {
     fetchInst();
   }, []);
 
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      // Hide when scrolling down past 80px, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
@@ -34,11 +54,12 @@ export default function Navbar() {
   return (
     <nav className="glass-panel" style={{
       position: 'sticky',
-      top: '1rem',
+      top: isVisible ? '1rem' : '-100px',
       margin: '0 1rem',
       zIndex: 1000,
       padding: '0.75rem 1.5rem',
       borderRadius: 'var(--radius-xl)',
+      transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     }}>
       <div className="flex-between" style={{ width: '100%' }}>
         {/* Logo */}
